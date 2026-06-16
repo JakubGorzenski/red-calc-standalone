@@ -1,0 +1,45 @@
+
+
+
+
+Implement logic for the calculator, in the following way:
+1. There shoud be an "operation_stack" which contains:
+    a. number
+    b. requested_operation
+    c. flag for a bracket
+2. When the user presses one of the gray keys if no requested_operation exists append it to the number, otherwise:
+    if operation_stack[current-1] exists and !operation_stack[current-1].bracket then operation_stack[current-1].number = operation_stack[current-1].number (calculation from operation_stack[current-1].requested_operation) operation_stack[current].number; operation_stack[current] = {}; append value of pressed key to number;
+    else push to operation_stack, and append the key to its number.
+3. When pressing the green operation buttons:
+    for mathematical operations set the requested_operation of the current operation_stack.
+    for bracket toggle the flag in current-1 operation_stacks
+    for equals calculate the result of operation like in 2nd point, if operation_stack[current-2].bracket then operation_stack[current-2].bracket = false; pop operation_stack[current];
+4. display all values of operation_stack[current]
+
+Do not implement the rest of the buttons.
+If you have any questions ask.
+
+
+
+
+1. Implement 'DEL' button for deleting single caracters.
+2. Implement 'CLR', witch shoud delete the newest line
+3. When pressin the '=' key, if there is no brackets:
+    - the top number shoud be updated to the result of the operation.
+    - the bottom number shoud remain but be greyd out
+4. After that:
+    - pressing '=' key again shoud apply the operation again
+    - pressing 'CLR' shoud clear both lines
+    - pressing 'DEL' shoud restore the grey line to normal operation
+    - pressing any other key shoud delete the grey line, before working
+
+
+
+change code handling operation buttons, such that:
+- pressing multiply twice results in power operator (^)
+- pressing '-' after there is already an operation or there is no prev number, and curr number is blank should create a negative number.
+
+
+
+!f99/10 => 1/990
+1/0+
