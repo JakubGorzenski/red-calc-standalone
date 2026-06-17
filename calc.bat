@@ -1,1 +1,1 @@
-start py C:\Users\kubag\Desktop\python\calc.py
+start py .\calc.py
