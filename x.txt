@@ -43,3 +43,4 @@ change code handling operation buttons, such that:
 
 !f99/10 => 1/990
 1/0+
+2=/dd

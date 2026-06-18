@@ -1,4 +1,5 @@
 import tkinter as tk
+import copy as copy
 
 # Global font configuration
 DISPLAY_FONT = ("Courier New", 18)
@@ -11,9 +12,19 @@ class OperationEntry:
         self.bracket = bracket
         self.calculated = calculated
         self.stub = stub
+class Context:
+    def __init__(self):
+        self.operation_stack = []
+        self.number_memory   = {"A": ["0.00000000"], "B": ["0.00000000"], "C": ["0.00000000"]} # starts with "" in lists so you can read [0]
+        self.greyed_out      = False
+        self.precision       = 2
+        self.fraction_style  = 1
+        self.question_mark   = " "
 
 
 def main(run_tests=False):
+    C = Context()
+
     window = tk.Tk()
     root = tk.Frame(window)
     root.pack(fill="both", expand=True, padx=5, pady=5)
@@ -24,33 +35,25 @@ def main(run_tests=False):
     display.tag_configure("greyed", foreground="gray")
 
 
-    operation_stack = []
-    number_memory = {"A": ["0.00000000"], "B": ["0.00000000"], "C": ["0.00000000"]} # starts with "" in lists so you can read [0]
-    greyed_out = False
-    precision = 4
-    fraction_style = 2
-    question_mark = " "
-
-
     def at(array, index, default=None):
         """return array[index] or default"""
         if len(array) >= abs(index) and len(array) > index:
             return array[index]
         return default
-    def current_operation():
-        if len(operation_stack) == 0:
-            operation_stack.append(OperationEntry())
-        return operation_stack[-1]
-    def previous_operation(go_further_back_by = 0):
-        if len(operation_stack) > go_further_back_by + 1:
-            return operation_stack[-2 - go_further_back_by]
+    def current_operation(C):
+        if len(C.operation_stack) == 0:
+            C.operation_stack.append(OperationEntry())
+        return C.operation_stack[-1]
+    def previous_operation(C, go_further_back_by = 0):
+        if len(C.operation_stack) > go_further_back_by + 1:
+            return C.operation_stack[-2 - go_further_back_by]
         else:
             return OperationEntry(stub=True)
-    def is_current_valid():
-        curr = current_operation()
-        prev = previous_operation()
+    def is_current_valid(C):
+        curr = current_operation(C)
+        prev = previous_operation(C)
 
-        if prev.rq_op == "÷" and prev.bracket == " " and string_round(curr, to_float=True) == 0.0:
+        if prev.rq_op == "÷" and prev.bracket == " " and string_round(C, curr, to_float=True) == 0.0:
             return False
         if curr.number in {"", "-"} or curr.number[-1] == ".":
             return False
@@ -58,59 +61,56 @@ def main(run_tests=False):
             return False
         return True
 
-    def clr_if_blank():
-        curr = current_operation()
+    def clr_if_blank(C):
+        curr = current_operation(C)
         if curr.number == "":
-            operation_stack.pop()
-    def append_to_number(value):
-        nonlocal question_mark
-
-        curr = current_operation()
+            C.operation_stack.pop()
+    def append_to_number(C, value):
+        curr = current_operation(C)
         if curr.calculated and value != "/":
-            curr.number = string_round(curr)
+            curr.number = string_round(C, curr)
             curr.calculated = False
 
         p_char = at(curr.number, -1)
 
-        if at(curr.number, 0) in {"A", "B", "C"}:
-            last_num_mem = len(number_memory[at(curr.number, 0)]) - 1
+        if value == "/" and p_char == "/":
+            curr.number = curr.number[:-1]
+        elif at(curr.number, 0) in {"A", "B", "C"}:
+            last_num_mem = len(C.number_memory[at(curr.number, 0)]) - 1
             if at(curr.number, 0) == value:
                 next = at(curr.number, 1)
                 if next == "/":
                     next = None
                 next = int(next or -1) + 1
                 if next >= last_num_mem:
-                    question_mark = "?"
+                    C.question_mark = "?"
                     return
                 curr.number = value + str(next)
             elif value in {"A", "B", "C"}:
                 curr.number = value
             elif value in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}:
                 if int(value) >= last_num_mem:
-                    question_mark = "?"
+                    C.question_mark = "?"
                     return
                 curr.number = curr.number[0] + value
 
             elif value == "/":
-                if p_char == "/":
-                    curr.number = curr.number[:-1]
-                else:
-                    curr.number += "/"
+                curr.number += "/"
 
         elif value in {".", "/"}:
             count = curr.number.count(".") + curr.number.count("/")
             if value == "." and count < 1:
                 curr.number += "."
-            elif value == "/" and count < 2 and p_char not in {".", "/"}:
+            elif value == "/" and count < 2 and p_char != ".":
                 curr.number += "/"
             else:
-                question_mark = "?"
+                C.question_mark = "?"
         elif p_char == "/" and value == "0":
-            question_mark = "?"
+            C.question_mark = "?"
         elif curr.number == "" or value in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}:
             curr.number += value
         else:
-            question_mark = "?"
+            C.question_mark = "?"
 
     def to_fraction(decimal_part):
         def frc(f, i):
@@ -135,7 +135,7 @@ def main(run_tests=False):
                 return n, d
             if i > 15:
                 return n, d
-    def string_round(operation_entry, visual_modification=False, to_float=False, check_if_fraction=False):
+    def string_round(C, operation_entry, visual_modification=False, to_float=False, check_if_fraction=False):
         string = operation_entry.number
         calculated = operation_entry.calculated
 
@@ -148,7 +148,7 @@ def main(run_tests=False):
                 idx = 0
             else:
                 idx = 1 + int(idx)
-            string = number_memory[string[0]][int(idx)] + append
+            string = C.number_memory[string[0]][int(idx)] + append
             if string[-2:] == "//":
                 string = string[:-2]
 
@@ -171,7 +171,7 @@ def main(run_tests=False):
         if "." in fraction[0]:
             whole, decimal_part = fraction[0].split(".")
             if calculated:
-                decimal_part = decimal_part[:precision]
+                decimal_part = decimal_part[:C.precision]
             if len(fraction) == 1:
                 ret_string = f"{whole}.{decimal_part}"
                 ret_float  = float(ret_string + "0")
@@ -183,10 +183,13 @@ def main(run_tests=False):
                     ret_float  = int(whole or 0) +               round(int(fraction[1] or 0) * float("0." + decimal_part)) / int(fraction[1] or 1)
                 else:
                     n, d = to_fraction(decimal_part)
-                    if fraction_style == 2:
+                    if C.fraction_style == 2:
                         n += int(whole or 0) * d
                         whole = ""
-                    ret_string = f"{whole and whole + separator}{n}/{d}"
+                    if n == 0:
+                        ret_string = f"{whole or "0"}"
+                    else:
+                        ret_string = f"{whole and whole + separator}{n}/{d}"
                     ret_float  = int(whole or 0) +               n / d
 
         elif len(fraction) == 1:
@@ -204,47 +207,44 @@ def main(run_tests=False):
                                         # int + int => 2
                                         # frc + int => 3
                                         # frc + frc => 4
-                return ret_float * sign, (len(fraction) > 1) * 2 or isinstance(ret_float, int)
+                return ret_float * sign, (len(fraction) > 1) * 2 or ret_float.is_integer()
             return ret_float * sign
         else:
             return ch_sign + ret_string
-    def insert_number_memory(bracket, number):
-        if number_memory["C"][0] != number:
-            number_memory["C"].insert(0, number)
-            number_memory["C"] = number_memory["C"][:11]
+    def insert_number_memory(C, bracket, number):
+        if C.number_memory["C"][0] != number:
+            C.number_memory["C"].insert(0, number)
+            C.number_memory["C"] = C.number_memory["C"][:11]
 
         if bracket == "(":
-            if number_memory["B"][0] != number:
-                number_memory["B"].insert(0, number)
-                number_memory["B"] = number_memory["B"][:11]
+            if C.number_memory["B"][0] != number:
+                C.number_memory["B"].insert(0, number)
+                C.number_memory["B"] = C.number_memory["B"][:11]
         else:
-            if number_memory["A"][0] != number:
-                number_memory["A"].insert(0, number)
-                number_memory["A"] = number_memory["A"][:11]
+            if C.number_memory["A"][0] != number:
+                C.number_memory["A"].insert(0, number)
+                C.number_memory["A"] = C.number_memory["A"][:11]
 
 
-    def calculate(return_result=False, equals=False):
-        nonlocal question_mark
-
-        curr = current_operation()
-        prev = previous_operation()
-        prev2 = previous_operation(1)
+    def calculate(C, return_result=False, equals=False):
+        curr = current_operation(C)
+        prev = previous_operation(C)
         
         if prev.stub or prev.bracket == "(":
             if equals:
                 if curr.rq_op != " ":
-                    question_mark = "?"
+                    C.question_mark = "?"
                     return None
-                curr.number, cn_frc = string_round(curr, to_float=True, check_if_fraction=True)
+                curr.number, cn_frc = string_round(C, curr, to_float=True, check_if_fraction=True)
                 curr.number = f"{curr.number:.9f}"
                 curr.calculated = True
-                insert_number_memory(prev.bracket, curr.number + "/" * (cn_frc >= 2))
+                insert_number_memory(C, prev.bracket, curr.number + "/" * (cn_frc >= 2))
                 return curr
             return None
 
-        a, a_frc = string_round(prev, to_float=True, check_if_fraction=True)
+        a, a_frc = string_round(C, prev, to_float=True, check_if_fraction=True)
         op = prev.rq_op
-        b, b_frc = string_round(curr, to_float=True, check_if_fraction=True)
+        b, b_frc = string_round(C, curr, to_float=True, check_if_fraction=True)
 
         frc = "/" if a_frc + b_frc > 2 else ""
         result = 0.0
@@ -268,33 +268,32 @@ def main(run_tests=False):
         prev.calculated = True
 
         if not return_result:
-            insert_number_memory(previous_operation(1).bracket, prev.number)
+            insert_number_memory(C, previous_operation(C, 1).bracket, prev.number)
 
-        if not greyed_out:
+        if not C.greyed_out:
             prev.rq_op = curr.rq_op
             prev.bracket = curr.bracket
             if not return_result:
-                operation_stack.pop()
+                C.operation_stack.pop()
 
         return prev
-    def update_display(is_test=False):
-        prev2 = previous_operation(1)
-        prev = previous_operation()
-        curr = current_operation()
-        nonlocal question_mark
+    def update_display(C, is_test=False):
+        prev2 = previous_operation(C, 1)
+        prev = previous_operation(C)
+        curr = current_operation(C)
 
         line_3 = f"{curr.rq_op}{curr.bracket}"
 
         if line_3 != "  ":
-            calc = calculate(return_result=True)
+            calc = calculate(C, return_result=True)
             if calc:
-                line_1 = f"{prev2.rq_op}{prev2.bracket}{string_round(calc, True):31}{question_mark}\n"
+                line_1 = f"{prev2.rq_op}{prev2.bracket}{string_round(C, calc, True):31}{C.question_mark}\n"
             else:
-                line_1 = f"{prev.rq_op}{prev.bracket}{string_round(curr, True):31}{question_mark}\n"
+                line_1 = f"{prev.rq_op}{prev.bracket}{string_round(C, curr, True):31}{C.question_mark}\n"
             line_2 = line_3
         else:
-            line_1 = f"{prev2.rq_op}{prev2.bracket}{string_round(prev, True):31}{question_mark}\n"
-            line_2 = f"{prev.rq_op}{prev.bracket}{string_round(curr, True)}"
+            line_1 = f"{prev2.rq_op}{prev2.bracket}{string_round(C, prev, True):31}{C.question_mark}\n"
+            line_2 = f"{prev.rq_op}{prev.bracket}{string_round(C, curr, True)}"
 
         if is_test:
             return line_1 + line_2
@@ -303,127 +302,184 @@ def main(run_tests=False):
         display.delete(1.0, tk.END)
         
         display.insert(1.0, line_1)
-        display.insert(tk.END, line_2, "greyed" if greyed_out else None)
+        display.insert(tk.END, line_2, "greyed" if C.greyed_out else None)
         
         display.config(state="disabled")
 
 
-    def handle_equals_button():
-        nonlocal greyed_out
-        nonlocal question_mark
+    def handle_equals_button(C):
+        prev = previous_operation(C)
 
-        curr = current_operation()
-        prev = previous_operation()
-        prev2 = previous_operation(1)
-
-        if not is_current_valid():
-            question_mark = "?"
+        if not is_current_valid(C):
+            C.question_mark = "?"
             return
 
-        if len(operation_stack) == 2 and prev.bracket == " ":
-            greyed_out = True
+        if len(C.operation_stack) == 2 and prev.bracket == " ":
+            C.greyed_out = True
 
-        if calculate(equals=True):
-            previous_operation().bracket = " "
-    def handle_del_button():
+        if calculate(C, equals=True):
+            previous_operation(C).bracket = " "
+    def handle_del_button(C):
         """Delete the last character from current number"""
-        nonlocal greyed_out
-        if greyed_out:
-            greyed_out = False
+        if C.greyed_out:
+            C.greyed_out = False
             return
 
-        current = current_operation()
+        curr = current_operation(C)
 
-        if current.bracket != " ":
-            current.bracket = " "
-        elif current.rq_op != " ":
-            current.rq_op = " "
-        elif current.number:
-            if current.calculated:
-                current.number = string_round(current)
-                current.calculated = False
-            current.number = current.number[:-1]
+        if curr.bracket != " ":
+            curr.bracket = " "
+        elif curr.rq_op != " ":
+            curr.rq_op = " "
+        elif curr.number:
+            if curr.calculated:
+                curr.number = string_round(C, curr)
+                curr.calculated = False
+            curr.number = curr.number[:-1]
 
-        clr_if_blank()
-    def handle_clr_button():
+        clr_if_blank(C)
+    def handle_clr_button(C):
         """Clear the newest line (current operation)"""
-        operation_stack.pop()
-    def handle_number_button(value):
-        current = current_operation()
+        C.operation_stack.pop()
+    def handle_number_button(C, value):
+        curr = current_operation(C)
 
-        if greyed_out and value == "/":
-            current.rq_op = " "
-        elif current.rq_op != " ":
-            calculate()
-            operation_stack.append(OperationEntry())
-            current = current_operation()
+        if C.greyed_out and value == "/":
+            curr.rq_op = " "
+        elif curr.rq_op != " ":
+            calculate(C)
+            C.operation_stack.append(OperationEntry())
+            curr = current_operation(C)
 
-        append_to_number(value)
-    def handle_operation_button(op):
-        nonlocal question_mark
+        append_to_number(C, value)
+    def handle_operation_button(C, op):
+        curr = current_operation(C)
+        prev = previous_operation(C)
 
-        curr = current_operation()
-        prev = previous_operation()
-
-        if (curr.rq_op == " " and is_current_valid()) or greyed_out:
+        if (curr.rq_op == " " and is_current_valid(C)) or C.greyed_out:
             curr.rq_op = op
         elif curr.rq_op == "×" and op == "×":
             curr.rq_op = "^"
         elif op == "-":
-            handle_number_button("-")
+            handle_number_button(C, "-")
         else:
-            question_mark = "?"
-    def handle_bracket_button():
-        nonlocal greyed_out
-        nonlocal question_mark
-
-        curr = current_operation()
-        prev = previous_operation()
+            C.question_mark = "?"
+    def handle_bracket_button(C):
+        curr = current_operation(C)
+        prev = previous_operation(C)
         
-        greyed_out = False
+        C.greyed_out = False
         
         if curr.rq_op != " ":
             curr.bracket = "(" if curr.bracket == " " else " "
         else:
             if prev.stub:
-                question_mark = "?"
+                C.question_mark = "?"
             else:
                 prev.bracket = "(" if prev.bracket == " " else " "
 
-    def handle_button_press(text):
-        nonlocal greyed_out
-        nonlocal question_mark
-        question_mark = " "
+    def handle_button_press(C, text):
+        C.question_mark = " "
 
         if text == "=":
-            handle_equals_button()
+            handle_equals_button(C)
         elif text == "DEL":
-            handle_del_button()
+            handle_del_button(C)
         else:
-            if greyed_out:
-                handle_clr_button()
+            if C.greyed_out:
+                handle_clr_button(C)
             
             if text == "CLR":
-                handle_clr_button()
+                handle_clr_button(C)
             elif text in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "/", ".", "Ans", "B", "C"}:
-                handle_number_button(text[0])
+                handle_number_button(C, text[0])
             elif text in {"+", "-", "×", "÷"}:
-                handle_operation_button(text)
+                handle_operation_button(C, text)
             elif text == "(":
-                handle_bracket_button()
+                handle_bracket_button(C)
             else:
-                question_mark = "?"
+                C.question_mark = "?"
                 pass
-            greyed_out = False
+            C.greyed_out = False
 
-        update_display()
+        update_display(C)
+    def switch_precision(C, switch):
+        C.precision = 2 * int(switch)
+        update_display(C)
+    def switch_fraction(C, switch):
+        C.fraction_style = int(switch)
+        update_display(C)
+
+
+
+    if run_tests:
+        test_result = "["
+        def test(in_sequence, output):
+            nonlocal test_result
+
+            # Test Context
+            TC = Context()
+
+            try:
+                for key in in_sequence:
+                    if key in "!@#$":
+                        switch_precision(TC, " !@#$".index(key))
+                    elif key in "%^":
+                        switch_fraction(TC, " %^".index(key))
+                    elif key in "Sdc*A":
+                        key = {"S":"Sel", "d":"DEL", "c":"CLR", "*":"×", "A":"Ans"}[key]
+                        handle_button_press(TC, key)
+                    else:
+                        handle_button_press(TC, key)
+                result = update_display(TC, True)
+                if result == output:
+                    test_result += "-"
+                else:
+                    test_result += "/"
+                    print(f"Fail \"{in_sequence}\":")
+                    print(result.replace(" ", "`"))
+                    print("Expected:")
+                    print(output.replace(" ", "`"))
+                    print("")
+            except:
+                test_result += "!"
+                print(f"Fail \"{in_sequence}\":")
+                print("Expected:")
+                print(output.replace(" ", "`"))
+                print("")
+
+#   2 <!@#$> 8  1/2<%^>3/2
+#   [S] [7] [8] [9] [d] [c]
+#   [C] [4] [5] [6] [-] [*]
+#   [B] [1] [2] [3] [+] [÷]
+#   [A] [/] [0] [.] [(] [=]
+
+        test("",            "                                  \n   ")
+        test("$/6=",        "                                  \n   0.16666666")
+        test("$/6=/",       "                                  \n   1/6")
+        test("$1÷6=/",      "                                  \n   1/6")
+        test("%/3=/",       "                                  \n   1/3")
+        test("/2+0=",       "   1/2                            \n+  0")
+        test("/2+0=cA/",    "                                  \n   0.50")
+        test("A5",          "                                 ?\n   0.00")
+        test("/2=cA",       "                                  \n   1/2")
+        test(".6900/",      "                                  \n   69/100")
+        test("$.00000001/=","                                  \n   0.00000001")
+        test("1+(2*",       "+( 2                              \n× ")
+        test("1÷0+",        "   1                             ?\n÷  0")
+        test("%2=/",        "                                  \n   2")
+        test("@1.33//",     "                                  \n   1.33")
+        test("@1/3=//",     "                                  \n   0.3333")
+        test("0=/",         "                                  \n   0")
+
+        print(test_result + "]")
 
 
 
     switch_row = tk.Frame(root)
     switch_row.pack(side="top", anchor="w")
 
-    def create_switch(left_label, right_label, steps, command):
+    def create_switch(C, left_label, right_label, steps, command, default_value = 1):
         switch = tk.Frame(switch_row)
         label = tk.Label(switch, text=left_label, font=BUTTON_FONT)
         label.pack(side="left")
@@ -437,10 +493,10 @@ def main(run_tests=False):
             width        = 20,
             sliderlength = 20,
             showvalue    = False,
-            command      = command
+            command      = lambda sw: command(C, sw)
         )
         scale.pack(side="left", padx=2, pady=1)
-        scale.set(2)
+        scale.set(default_value)
         tk.Label(switch, text=right_label, font=BUTTON_FONT).pack(side="left")
         switch.pack(anchor="w", padx=50 - label_width, side="left")
     
@@ -476,18 +532,9 @@ def main(run_tests=False):
         "blue": "#0066cc",
         "gray": "#b0b0b0"
     }
-    
-    def switch_precision(switch):
-        nonlocal precision
-        precision = 2 * int(switch)
-        update_display()
-    def switch_fraction(switch):
-        nonlocal fraction_style
-        fraction_style = int(switch)
-        update_display()
 
-    create_switch("2",   "8",   4, switch_precision)
-    create_switch("1/2", "3/2", 2, switch_fraction)
+    create_switch(C, "2",   "8",   4, switch_precision, 2)
+    create_switch(C, "1/2", "3/2", 2, switch_fraction, 1)
     for row_idx, row in enumerate(buttons):
         frame = tk.Frame(root)
         frame.pack(fill="both", expand=True, padx=1, pady=1)
@@ -497,76 +544,17 @@ def main(run_tests=False):
                 frame, text=btn_text, font=BUTTON_FONT, width=5, height=1,
                 bg=color_name, fg=text_color_map[color_name],
                 activebackground=pressed_color_map[color_name], activeforeground=text_color_map[color_name],
-                command=lambda text=btn_text: handle_button_press(text)
+                command=lambda text=btn_text: handle_button_press(C, text)
             )
             btn.pack(side="left", padx=2, pady=1)
 
-    update_display()
+    update_display(C)
 
     window.title("Calculator")
     # Auto-size window to fit contents
     window.update_idletasks()
     window.geometry("")
     window.resizable(width=False, height=False)
-
-    if run_tests:
-        test_result = "["
-        def test(in_sequence, output):
-            nonlocal test_result
-
-            for key in in_sequence:
-                if key in "!@#$":
-                    switch_precision(" !@#$".index(key))
-                elif key in "%^":
-                    switch_fraction(" %^".index(key))
-                elif key in "Sdc*/Af":
-                    key = {"S":"Sel", "d":"DEL", "c":"CLR", "*":"×", "/":"÷", "A":"Ans", "f":"/"}[key]
-                    handle_button_press(key)
-                else:
-                    handle_button_press(key)
-            result = update_display(True)
-            if result == output:
-                test_result += "-"
-            else:
-                test_result += "/"
-                print(f"Fail \"{in_sequence}\":")
-                print(result.replace(" ", "`"))
-                print("Expected:")
-                print(output.replace(" ", "`"))
-
-            # reset data
-            nonlocal operation_stack
-            operation_stack = []
-            nonlocal number_memory
-            number_memory = {"A": ["0.00000000"], "B": ["0.00000000"], "C": ["0.00000000"]} # starts with "" in lists so you can read [0]
-            nonlocal greyed_out
-            greyed_out = False
-            nonlocal precision
-            precision = 4
-            nonlocal fraction_style
-            fraction_style = 2
-
-#   2 <!@#$> 8  1/2<%^>3/2
-#   [S] [7] [8] [9] [d] [c]
-#   [C] [4] [5] [6] [-] [*]
-#   [B] [1] [2] [3] [+] [/]
-#   [A] [f] [0] [.] [(] [=]
-
-        test("",            "                                  \n   ")
-        test("$f6=",        "                                  \n   0.16666666")
-        test("$f6=f",       "                                  \n   1/6")
-        test("$1/6=f",      "                                  \n   1/6")
-        test("%f3=f",       "                                  \n   1/3")
-        test("f2+0=",       "   1/2                            \n+  0")
-        test("f2+0=cAf",    "                                  \n   0.5000")
-        test("A5",          "                                 ?\n   0.0000")
-        test("f2=cA",       "                                  \n   1/2")
-        test(".6900f",      "                                  \n   69/100")
-        test("$.00000001f=","                                  \n   0.00000001")
-        test("1+(2*",       "+( 2                              \n× ")
-        test("1/0+",        "   1                             ?\n÷  0")
-
-        print(test_result + "]")
 
     window.mainloop()
 
