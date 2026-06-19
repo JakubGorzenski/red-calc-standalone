@@ -53,8 +53,8 @@ def main(run_tests=False):
         curr = current_operation(C)
         prev = previous_operation(C)
 
-        if prev.rq_op == "÷" and prev.bracket == " " and string_round(C, curr, to_float=True) == 0.0:
-            return False
+        #if prev.rq_op == "÷" and prev.bracket == " " and string_round(C, curr, to_float=True) == 0.0:
+            #return False
         if curr.number in {"", "-"} or curr.number[-1] == ".":
             return False
         elif curr.number[-1] == "/" and "." not in curr.number:
@@ -258,8 +258,12 @@ def main(run_tests=False):
         elif op == "^":
             result = a ** b
         elif op == "÷":
-            assert b != 0.0, "Division by 0, shoud not be posibble to enter!"
-            result = a / b
+            if b != 0.0:
+                result = a / b
+            else:
+                result = a
+                if a != 0.0:
+                    result = a / abs(a)
 
         if return_result:
             prev = OperationEntry()
@@ -282,18 +286,21 @@ def main(run_tests=False):
         prev = previous_operation(C)
         curr = current_operation(C)
 
-        line_3 = f"{curr.rq_op}{curr.bracket}"
+        line_3 = f"{curr.rq_op}{curr.bracket}                                 "
 
-        if line_3 != "  ":
+        if line_3 != "                                   ":
             calc = calculate(C, return_result=True)
             if calc:
-                line_1 = f"{prev2.rq_op}{prev2.bracket}{string_round(C, calc, True):31}{C.question_mark}\n"
+                line_1 = f"{prev2.rq_op}{prev2.bracket}{string_round(C, calc, True):31}{C.question_mark} \n"
             else:
-                line_1 = f"{prev.rq_op}{prev.bracket}{string_round(C, curr, True):31}{C.question_mark}\n"
+                line_1 = f"{prev.rq_op}{prev.bracket}{string_round(C, curr, True):31}{C.question_mark} \n"
             line_2 = line_3
         else:
-            line_1 = f"{prev2.rq_op}{prev2.bracket}{string_round(C, prev, True):31}{C.question_mark}\n"
-            line_2 = f"{prev.rq_op}{prev.bracket}{string_round(C, curr, True)}"
+            memory_location = "    "
+            if at(curr.number, 0) in {"A", "B", "C"}:
+                memory_location = f"[{curr.number.rstrip("/"):2}]"
+            line_1 = f"{prev2.rq_op}{prev2.bracket}{string_round(C, prev, True):31}{C.question_mark} \n"
+            line_2 = f"{prev.rq_op}{prev.bracket}{string_round(C, curr, True):29}{memory_location}"
 
         if is_test:
             return line_1 + line_2
@@ -454,23 +461,25 @@ def main(run_tests=False):
 #   [B] [1] [2] [3] [+] [÷]
 #   [A] [/] [0] [.] [(] [=]
 
-        test("",            "                                  \n   ")
-        test("$/6=",        "                                  \n   0.16666666")
-        test("$/6=/",       "                                  \n   1/6")
-        test("$1÷6=/",      "                                  \n   1/6")
-        test("%/3=/",       "                                  \n   1/3")
-        test("/2+0=",       "   1/2                            \n+  0")
-        test("/2+0=cA/",    "                                  \n   0.50")
-        test("A5",          "                                 ?\n   0.00")
-        test("/2=cA",       "                                  \n   1/2")
-        test(".6900/",      "                                  \n   69/100")
-        test("$.00000001/=","                                  \n   0.00000001")
-        test("1+(2*",       "+( 2                              \n× ")
-        test("1÷0+",        "   1                             ?\n÷  0")
-        test("%2=/",        "                                  \n   2")
-        test("@1.33//",     "                                  \n   1.33")
-        test("@1/3=//",     "                                  \n   0.3333")
-        test("0=/",         "                                  \n   0")
+        test("",                "                                   \n                                   ")
+        test("$/6=",            "                                   \n   0.16666666                      ")
+        test("$/6=/",           "                                   \n   1/6                             ")
+        test("$1÷6=/",          "                                   \n   1/6                             ")
+        test("%/3=/",           "                                   \n   1/3                             ")
+        test("/2+0=",           "   1/2                             \n+  0                               ")
+        test("/2+0=cA/",        "                                   \n   0.50                        [A ]")
+        test("A5",              "                                 ? \n   0.00                        [A ]")
+        test("/2=cA",           "                                   \n   1/2                         [A ]")
+        test(".6900/",          "                                   \n   69/100                          ")
+        test("$.00000001/=",    "                                   \n   0.00000001                      ")
+        test("1+(2*",           "+( 2                               \n×                                  ")
+        test("1÷0+",            "   1.00                            \n+                                  ")
+        test("%2=/",            "                                   \n   2                               ")
+        test("@1.33//",         "                                   \n   1.33                            ")
+        test("@1/3=//",         "                                   \n   0.3333                          ")
+        test("0=/",             "                                   \n   0                               ")
+        test("A+",              "   0.00                            \n+                                  ")
+        test("@1÷(0.0001=+!",   "   1.00                            \n+                                  ")
 
         print(test_result + "]")
 
