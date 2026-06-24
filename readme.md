@@ -1,6 +1,6 @@
 # Red Calc - Advanced Calculator
 <!-- Make this less like a sales pitch -->
-A feature-rich Python calculator built with Tkinter that goes beyond traditional calculator functionality.
+A standalone version of my [Factorio](https://factorio.com/) mod `red calculator` Python calculator built with Tkinter.
 
 ## How to Run
 
