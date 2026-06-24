@@ -1,5 +1,5 @@
 import tkinter as tk
-import copy as copy
+import math
 
 # Global font configuration
 DISPLAY_FONT = ("Courier New", 18)
@@ -7,15 +7,15 @@ BUTTON_FONT = ("Courier New", 18)
 
 class OperationEntry:
     def __init__(self, number="", rq_op=" ", bracket=" ", calculated=False, stub=False):
-        self.number = number
-        self.rq_op = rq_op
-        self.bracket = bracket
+        self.number     = number
+        self.rq_op      = rq_op
+        self.bracket    = bracket
         self.calculated = calculated
-        self.stub = stub
+        self.stub       = stub
 class Context:
     def __init__(self):
         self.operation_stack = []
-        self.number_memory   = {"A": ["0.00000000"], "B": ["0.00000000"], "C": ["0.00000000"]} # starts with "" in lists so you can read [0]
+        self.number_memory   = {"A": ["0.00000000"], "B": ["0.00000000"], "C": ["0.00000000"]}
         self.greyed_out      = False
         self.precision       = 2
         self.fraction_style  = 1
@@ -35,6 +35,13 @@ def main(run_tests=False):
     display.tag_configure("greyed", foreground="gray")
 
 
+    def sign(x):
+        if x > 0.0:
+            return 1
+        elif x < 0.0:
+            return -1
+        else:
+            return 0
     def at(array, index, default=None):
         """return array[index] or default"""
         if len(array) >= abs(index) and len(array) > index:
@@ -51,66 +58,13 @@ def main(run_tests=False):
             return OperationEntry(stub=True)
     def is_current_valid(C):
         curr = current_operation(C)
-        prev = previous_operation(C)
 
-        #if prev.rq_op == "÷" and prev.bracket == " " and string_round(C, curr, to_float=True) == 0.0:
-            #return False
         if curr.number in {"", "-"} or curr.number[-1] == ".":
             return False
         elif curr.number[-1] == "/" and "." not in curr.number:
             return False
         return True
 
-    def clr_if_blank(C):
-        curr = current_operation(C)
-        if curr.number == "":
-            C.operation_stack.pop()
-    def append_to_number(C, value):
-        curr = current_operation(C)
-        if curr.calculated and value != "/":
-            curr.number = string_round(C, curr)
-            curr.calculated = False
-
-        p_char = at(curr.number, -1)
-
-        if value == "/" and p_char == "/":
-            curr.number = curr.number[:-1]
-        elif at(curr.number, 0) in {"A", "B", "C"}:
-            last_num_mem = len(C.number_memory[at(curr.number, 0)]) - 1
-            if at(curr.number, 0) == value:
-                next = at(curr.number, 1)
-                if next == "/":
-                    next = None
-                next = int(next or -1) + 1
-                if next >= last_num_mem:
-                    C.question_mark = "?"
-                    return
-                curr.number = value + str(next)
-            elif value in {"A", "B", "C"}:
-                curr.number = value
-            elif value in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}:
-                if int(value) >= last_num_mem:
-                    C.question_mark = "?"
-                    return
-                curr.number = curr.number[0] + value
-
-            elif value == "/":
-                curr.number += "/"
-
-        elif value in {".", "/"}:
-            count = curr.number.count(".") + curr.number.count("/")
-            if value == "." and count < 1:
-                curr.number += "."
-            elif value == "/" and count < 2 and p_char != ".":
-                curr.number += "/"
-            else:
-                C.question_mark = "?"
-        elif p_char == "/" and value == "0":
-            C.question_mark = "?"
-        elif curr.number == "" or value in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}:
-            curr.number += value
-        else:
-            C.question_mark = "?"
 
     def to_fraction(decimal_part):
         def frc(f, i):
@@ -135,20 +89,20 @@ def main(run_tests=False):
                 return n, d
             if i > 15:
                 return n, d
-    def string_round(C, operation_entry, visual_modification=False, to_float=False, check_if_fraction=False):
+    def string_round(C, operation_entry, visual_modification=False, to_float=False):
         string = operation_entry.number
         calculated = operation_entry.calculated
 
         if at(string, 0) in {"A", "B", "C"}:
             calculated = True
-            idx = at(string, 1, "")
+            idx    = at(string, 1, "")
             append = at(string, 2, "")
             if idx in {"", "/"}:
                 append = idx
                 idx = 0
             else:
                 idx = 1 + int(idx)
-            string = C.number_memory[string[0]][int(idx)] + append
+            string = C.number_memory[string[0]][idx] + append
             if string[-2:] == "//":
                 string = string[:-2]
 
@@ -176,11 +130,11 @@ def main(run_tests=False):
                 ret_string = f"{whole}.{decimal_part}"
                 ret_float  = float(ret_string + "0")
             elif len(fraction) == 2:
-                if whole == "0":
+                if whole and int(whole) == 0:
                     whole = ""
                 if fraction[1]:
-                    ret_string = f"{whole and whole + separator}{round(int(fraction[1] or 0) * float("0." + decimal_part))}/{fraction[1]}"
-                    ret_float  = int(whole or 0) +               round(int(fraction[1] or 0) * float("0." + decimal_part)) / int(fraction[1] or 1)
+                    ret_string = f"{whole and whole + separator}{math.ceil(int(fraction[1]) * float("0." + decimal_part))}/{fraction[1]}"
+                    ret_float  = int(whole or 0) +               math.ceil(int(fraction[1]) * float("0." + decimal_part)) / int(fraction[1] or 1)
                 else:
                     n, d = to_fraction(decimal_part)
                     if C.fraction_style == 2:
@@ -203,27 +157,18 @@ def main(run_tests=False):
             ret_float  = int(fraction[0] or 1) +       int(fraction[1] or 1) / int(fraction[2] or 1)
         
         if to_float:
-            if check_if_fraction:
-                                        # int + int => 2
-                                        # frc + int => 3
-                                        # frc + frc => 4
-                return ret_float * sign, (len(fraction) > 1) * 2 or ret_float.is_integer()
-            return ret_float * sign
+                                    # int + int => 2
+                                    # frc + int => 3
+                                    # frc + frc => 4
+            return ret_float * sign, (len(fraction) > 1) * 2 or ret_float.is_integer()
         else:
             return ch_sign + ret_string
-    def insert_number_memory(C, bracket, number):
-        if C.number_memory["C"][0] != number:
-            C.number_memory["C"].insert(0, number)
-            C.number_memory["C"] = C.number_memory["C"][:11]
+    def insert_number_memory(C, equals, bracket, number):
+        selected_array = (not equals and "C") or (bracket == "(" and "B") or "A"
 
-        if bracket == "(":
-            if C.number_memory["B"][0] != number:
-                C.number_memory["B"].insert(0, number)
-                C.number_memory["B"] = C.number_memory["B"][:11]
-        else:
-            if C.number_memory["A"][0] != number:
-                C.number_memory["A"].insert(0, number)
-                C.number_memory["A"] = C.number_memory["A"][:11]
+        if C.number_memory[selected_array][0] != number:
+            C.number_memory[selected_array].insert(0, number)
+            C.number_memory[selected_array] = C.number_memory[selected_array][:11]
 
 
     def calculate(C, return_result=False, equals=False):
@@ -235,19 +180,19 @@ def main(run_tests=False):
                 if curr.rq_op != " ":
                     C.question_mark = "?"
                     return None
-                curr.number, cn_frc = string_round(C, curr, to_float=True, check_if_fraction=True)
+                curr.number, cn_frc = string_round(C, curr, to_float=True)
                 curr.number = f"{curr.number:.9f}"
                 curr.calculated = True
-                insert_number_memory(C, prev.bracket, curr.number + "/" * (cn_frc >= 2))
+                insert_number_memory(C, equals,  prev.bracket, curr.number + "/" * (cn_frc >= 2))
                 return curr
             return None
 
-        a, a_frc = string_round(C, prev, to_float=True, check_if_fraction=True)
+        a, a_frc = string_round(C, prev, to_float=True)
         op = prev.rq_op
-        b, b_frc = string_round(C, curr, to_float=True, check_if_fraction=True)
+        b, b_frc = string_round(C, curr, to_float=True)
 
         frc = "/" if a_frc + b_frc > 2 else ""
-        result = 0.0
+        result = None
 
         if op == "+":
             result = a + b
@@ -261,9 +206,9 @@ def main(run_tests=False):
             if b != 0.0:
                 result = a / b
             else:
-                result = a
-                if a != 0.0:
-                    result = a / abs(a)
+                result = sign(a)
+
+        assert(result != None)
 
         if return_result:
             prev = OperationEntry()
@@ -272,10 +217,10 @@ def main(run_tests=False):
         prev.calculated = True
 
         if not return_result:
-            insert_number_memory(C, previous_operation(C, 1).bracket, prev.number)
+            insert_number_memory(C, equals, previous_operation(C, 1).bracket, prev.number)
 
         if not C.greyed_out:
-            prev.rq_op = curr.rq_op
+            prev.rq_op   = curr.rq_op
             prev.bracket = curr.bracket
             if not return_result:
                 C.operation_stack.pop()
@@ -286,7 +231,7 @@ def main(run_tests=False):
         prev = previous_operation(C)
         curr = current_operation(C)
 
-        line_3 = f"{curr.rq_op}{curr.bracket}                                 "
+        line_3 = f"{curr.rq_op}{curr.bracket}                                 " # space for test alignment
 
         if line_3 != "                                   ":
             calc = calculate(C, return_result=True)
@@ -314,7 +259,7 @@ def main(run_tests=False):
         display.config(state="disabled")
 
 
-    def handle_equals_button(C):
+    def handle_equals_button(C, _=None):
         prev = previous_operation(C)
 
         if not is_current_valid(C):
@@ -326,7 +271,7 @@ def main(run_tests=False):
 
         if calculate(C, equals=True):
             previous_operation(C).bracket = " "
-    def handle_del_button(C):
+    def handle_del_button(C, _=None):
         """Delete the last character from current number"""
         if C.greyed_out:
             C.greyed_out = False
@@ -343,22 +288,72 @@ def main(run_tests=False):
                 curr.number = string_round(C, curr)
                 curr.calculated = False
             curr.number = curr.number[:-1]
-
-        clr_if_blank(C)
-    def handle_clr_button(C):
+            if curr.number == "":
+                C.operation_stack.pop()
+    def handle_clr_button(C, _=None):
         """Clear the newest line (current operation)"""
         C.operation_stack.pop()
-    def handle_number_button(C, value):
+    def handle_number_button(C, append):
+        append = append[0]
         curr = current_operation(C)
 
-        if C.greyed_out and value == "/":
+        if C.greyed_out and append == "/":
             curr.rq_op = " "
         elif curr.rq_op != " ":
             calculate(C)
             C.operation_stack.append(OperationEntry())
             curr = current_operation(C)
 
-        append_to_number(C, value)
+
+        if curr.calculated and append != "/":
+            curr.number = string_round(C, curr)
+            curr.calculated = False
+
+        first_char = at(curr.number, 0)
+        prev_char = at(curr.number, -1)
+
+
+        if append == "/" and prev_char == "/":
+            curr.number = curr.number[:-1]
+        elif first_char in {"A", "B", "C"}:
+            last_num_mem = len(C.number_memory[first_char]) - 1
+            if first_char == append:
+                next_id = at(curr.number, 1)
+                if next_id == "/":
+                    next_id = None
+                next_id = int(next_id or -1) + 1
+                if next_id >= last_num_mem:
+                    C.question_mark = "?"
+                    return
+                curr.number = append + str(next_id)
+            elif append in {"A", "B", "C"}:
+                curr.number = append
+            elif append in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}:
+                if int(append) >= last_num_mem:
+                    C.question_mark = "?"
+                    return
+                curr.number = curr.number[0] + append
+
+            elif append == "/":
+                curr.number += "/"
+            else:
+                C.question_mark = "?"
+
+        elif append in {".", "/"}:
+            count = curr.number.count(".") + curr.number.count("/")
+            if append == "." and count < 1:
+                curr.number += "."
+            elif append == "/" and count < 2 and prev_char != ".":
+                curr.number += "/"
+            else:
+                C.question_mark = "?"
+        elif prev_char == "/" and append == "0":
+            C.question_mark = "?"
+        elif curr.number == "" or append in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}:
+            curr.number += append
+        else:
+            C.question_mark = "?"
+
     def handle_operation_button(C, op):
         curr = current_operation(C)
         prev = previous_operation(C)
@@ -371,11 +366,9 @@ def main(run_tests=False):
             handle_number_button(C, "-")
         else:
             C.question_mark = "?"
-    def handle_bracket_button(C):
+    def handle_bracket_button(C, _=None):
         curr = current_operation(C)
         prev = previous_operation(C)
-        
-        C.greyed_out = False
         
         if curr.rq_op != " ":
             curr.bracket = "(" if curr.bracket == " " else " "
@@ -393,22 +386,37 @@ def main(run_tests=False):
         elif text == "DEL":
             handle_del_button(C)
         else:
-            if C.greyed_out:
-                handle_clr_button(C)
-            
-            if text == "CLR":
-                handle_clr_button(C)
-            elif text in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "/", ".", "Ans", "B", "C"}:
-                handle_number_button(C, text[0])
-            elif text in {"+", "-", "×", "÷"}:
-                handle_operation_button(C, text)
-            elif text == "(":
-                handle_bracket_button(C)
-            else:
+            try:
+                button_fn = {
+                    "CLR" : handle_clr_button,
+                    "0"   : handle_number_button,
+                    "1"   : handle_number_button,
+                    "2"   : handle_number_button,
+                    "3"   : handle_number_button,
+                    "4"   : handle_number_button,
+                    "5"   : handle_number_button,
+                    "6"   : handle_number_button,
+                    "7"   : handle_number_button,
+                    "8"   : handle_number_button,
+                    "9"   : handle_number_button,
+                    "/"   : handle_number_button,
+                    "."   : handle_number_button,
+                    "Ans" : handle_number_button,
+                    "B"   : handle_number_button,
+                    "C"   : handle_number_button,
+                    "+"   : handle_operation_button,
+                    "−"   : handle_operation_button,
+                    "×"   : handle_operation_button,
+                    "÷"   : handle_operation_button,
+                    "("   : handle_bracket_button,
+                }[text]
+            except:
                 C.question_mark = "?"
-                pass
-            C.greyed_out = False
-
+            else:
+                if C.greyed_out:
+                    handle_clr_button(C)
+                button_fn(C, text)
+                C.greyed_out = False
         update_display(C)
     def switch_precision(C, switch):
         C.precision = 2 * int(switch)
@@ -433,8 +441,8 @@ def main(run_tests=False):
                         switch_precision(TC, " !@#$".index(key))
                     elif key in "%^":
                         switch_fraction(TC, " %^".index(key))
-                    elif key in "Sdc*A":
-                        key = {"S":"Sel", "d":"DEL", "c":"CLR", "*":"×", "A":"Ans"}[key]
+                    elif key in "Sdc*:A":
+                        key = {"S":"Sel", "d":"DEL", "c":"CLR", "*":"×", ":":"÷", "A":"Ans"}[key]
                         handle_button_press(TC, key)
                     else:
                         handle_button_press(TC, key)
@@ -458,13 +466,13 @@ def main(run_tests=False):
 #   2 <!@#$> 8  1/2<%^>3/2
 #   [S] [7] [8] [9] [d] [c]
 #   [C] [4] [5] [6] [-] [*]
-#   [B] [1] [2] [3] [+] [÷]
+#   [B] [1] [2] [3] [+] [:]
 #   [A] [/] [0] [.] [(] [=]
 
         test("",                "                                   \n                                   ")
         test("$/6=",            "                                   \n   0.16666666                      ")
         test("$/6=/",           "                                   \n   1/6                             ")
-        test("$1÷6=/",          "                                   \n   1/6                             ")
+        test("$1:6=/",          "                                   \n   1/6                             ")
         test("%/3=/",           "                                   \n   1/3                             ")
         test("/2+0=",           "   1/2                             \n+  0                               ")
         test("/2+0=cA/",        "                                   \n   0.50                        [A ]")
@@ -473,13 +481,19 @@ def main(run_tests=False):
         test(".6900/",          "                                   \n   69/100                          ")
         test("$.00000001/=",    "                                   \n   0.00000001                      ")
         test("1+(2*",           "+( 2                               \n×                                  ")
-        test("1÷0+",            "   1.00                            \n+                                  ")
+        test("1:0+",            "   1.00                            \n+                                  ")
         test("%2=/",            "                                   \n   2                               ")
         test("@1.33//",         "                                   \n   1.33                            ")
         test("@1/3=//",         "                                   \n   0.3333                          ")
         test("0=/",             "                                   \n   0                               ")
         test("A+",              "   0.00                            \n+                                  ")
-        test("@1÷(0.0001=+!",   "   1.00                            \n+                                  ")
+        test("@1:(0.0001=+!",   "   1.00                            \n+                                  ")
+        
+        test("A.",              "                                 ? \n   0.00                        [A ]")
+        test(".01/101",         "                                   \n   2/101                           ")
+        test("00.1/",           "                                   \n   1/10                            ")
+        test("1+(2*3+B",        "+( 6.00                            \n+  0.00                        [B ]")
+        test("2+2=S",           "   4.00                          ? \n+  2                               ")
 
         print(test_result + "]")
 

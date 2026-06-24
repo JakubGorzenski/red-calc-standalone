@@ -41,6 +41,24 @@ change code handling operation buttons, such that:
 
 
 
-!f99/10 => 1/990
-1/0+
-2=/dd
+a.
+A/+
+//
+
+- rename visual_modification to visual
+? 235     move if
+? 241     verify
++ add sign(x)
+? 345     check if correct
++ inline append_to_number()
++ 54      remove code
++ 80      var for at(curr.number, 0)
++ 68      rename value to append
++ 82      rename next to next_id
++ 152     remove int(idx)
+- 178     remove + "0"
++ 183     change to math.ceil
++ 183     remove fraction[1] or 0
++ 184     --||--
++ 207     remove check_if_fraction
++ 348     inline clr_if_blank
