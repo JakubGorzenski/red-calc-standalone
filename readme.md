@@ -79,11 +79,12 @@ python calc.py --test
 ```
 
 ---
-
+<!--
 ## Example Operations
 
 
 ---
+-->
 
 ## Features Summary
 
