@@ -1,6 +1,6 @@
 # Red Calc - Advanced Calculator
 <!-- Make this less like a sales pitch -->
-A standalone version of my [Factorio](https://factorio.com/) mod `red calculator` Python calculator built with Tkinter.
+A standalone version of my [Factorio](https://factorio.com/) mod `red calculator`, implemented in Python using Tkinter.
 
 ## How to Run
 
@@ -14,7 +14,6 @@ python calc.py
 
 **Regression Tests:**
 - Double-click `debug.bat`
-  **or**
 ```bash
 python calc.py --test
 ```
@@ -25,8 +24,8 @@ python calc.py --test
 
 ### 1. **Three Independent Memory Arrays**
   - Press `Ans`, `B`, or `C` buttons to access stored values
-    - subsequent presys cycle through values
-    - number buttons can be used to access specific (relative) locations
+    - subsequent presses cycle through values
+    - number buttons can be used to access specific (relative) addresses
   - Memory automatically captures results based on context:
     - **Ans:** Stores recent calculations
     - **B:** Stores results from closing a **B**rackets `(`
@@ -41,8 +40,8 @@ python calc.py --test
 ### 3. **Adjustable Precision & Fraction Display**
 - **Precision Slider:** Toggle between 2, 4, 6, or 8 decimal places
 - **Fraction Style Toggle:**
-  - Style 1: Mixed numbers (e.g., `1 1/2`)
-  - Style 2: Improper fractions (e.g., `3/2`)
+  - Mixed numbers (e.g., `1 1/2`)
+  - Improper fractions (e.g., `3/2`)
 
 ### 4. **Parenthesis Support**
 - Press `(` button to toggle bracket mode

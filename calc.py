@@ -315,7 +315,7 @@ def main(run_tests=False):
         prev_char = at(curr.number, -1)
 
 
-        if append == "/" and prev_char == "/":
+        if append == "/" and prev_char == "/" and (first_char in {"A", "B", "C"} or "." in curr.number):
             curr.number = curr.number[:-1]
         elif first_char in {"A", "B", "C"}:
             last_num_mem = len(C.number_memory[first_char]) - 1
@@ -496,6 +496,8 @@ def main(run_tests=False):
         test("1+(2*3+B",        "+( 6.00                            \n+  0.00                        [B ]")
         test("2+2=S",           "   4.00                          ? \n+  2                               ")
         test("^1.2/3",          "                                   \n   4/3                             ")
+        test("//2",             "                                   \n   1 1/2                           ")
+        test("///",             "                                 ? \n   1 1/                            ")
 
         print(test_result + "]")
 
