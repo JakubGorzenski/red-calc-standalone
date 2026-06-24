@@ -1,1 +1,0 @@
-start py .\calc.py

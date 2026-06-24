@@ -41,9 +41,6 @@ change code handling operation buttons, such that:
 
 
 
-a.
-A/+
-//
 
 - rename visual_modification to visual
 ? 235     move if

@@ -1,5 +1,6 @@
 import tkinter as tk
 import math
+import sys
 
 # Global font configuration
 DISPLAY_FONT = ("Courier New", 18)
@@ -133,18 +134,19 @@ def main(run_tests=False):
                 if whole and int(whole) == 0:
                     whole = ""
                 if fraction[1]:
-                    ret_string = f"{whole and whole + separator}{math.ceil(int(fraction[1]) * float("0." + decimal_part))}/{fraction[1]}"
-                    ret_float  = int(whole or 0) +               math.ceil(int(fraction[1]) * float("0." + decimal_part)) / int(fraction[1] or 1)
+                    n = math.ceil(int(fraction[1]) * float("0." + decimal_part))
+                    d = int(fraction[1])
                 else:
                     n, d = to_fraction(decimal_part)
-                    if C.fraction_style == 2:
-                        n += int(whole or 0) * d
-                        whole = ""
-                    if n == 0:
-                        ret_string = f"{whole or "0"}"
-                    else:
-                        ret_string = f"{whole and whole + separator}{n}/{d}"
-                    ret_float  = int(whole or 0) +               n / d
+
+                if C.fraction_style == 2:
+                    n += int(whole or 0) * d
+                    whole = ""
+                if n == 0:
+                    ret_string = f"{whole or "0"}"
+                else:
+                    ret_string = f"{whole and whole + separator}{n}/{d}"
+                ret_float  = int(whole or 0) +               n / d
 
         elif len(fraction) == 1:
             ret_string = string
@@ -488,12 +490,12 @@ def main(run_tests=False):
         test("0=/",             "                                   \n   0                               ")
         test("A+",              "   0.00                            \n+                                  ")
         test("@1:(0.0001=+!",   "   1.00                            \n+                                  ")
-        
         test("A.",              "                                 ? \n   0.00                        [A ]")
         test(".01/101",         "                                   \n   2/101                           ")
         test("00.1/",           "                                   \n   1/10                            ")
         test("1+(2*3+B",        "+( 6.00                            \n+  0.00                        [B ]")
         test("2+2=S",           "   4.00                          ? \n+  2                               ")
+        test("^1.2/3",          "                                   \n   4/3                             ")
 
         print(test_result + "]")
 
@@ -582,4 +584,4 @@ def main(run_tests=False):
     window.mainloop()
 
 if __name__ == "__main__":
-    main(True)
+    main("--test" in sys.argv)
