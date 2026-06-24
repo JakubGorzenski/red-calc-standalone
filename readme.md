@@ -14,6 +14,7 @@ python calc.py
 
 **Regression Tests:**
 - Double-click `debug.bat`
+  **or**
 ```bash
 python calc.py --test
 ```
@@ -28,14 +29,14 @@ python calc.py --test
     - number buttons can be used to access specific (relative) locations
   - Memory automatically captures results based on context:
     - **Ans:** Stores recent calculations
-    -  **B :** Stores results from closing a **B**rackets `(`
-    -  **C :** Stores any automatic **C**alculation results
+    - **B:** Stores results from closing a **B**rackets `(`
+    - **C:** Stores any automatic **C**alculation results
 
 ### 2. **Native Fraction Support**
-  - Input fractions directly: `3``/``1``/``2` → `3 1/2`
+  - Input fractions directly: `3` `/` `1` `/` `2` → `3 1/2`
   - Decimal-to-fraction conversion:
-    - Automatic: `3.1415``/` → `333/106`
-    - Manual:    `3.1415``/``123` → `387/123`
+    - Automatic: `3.1415` `/` → `333/106`
+    - Manual:    `3.1415` `/` `123` → `387/123`
 
 ### 3. **Adjustable Precision & Fraction Display**
 - **Precision Slider:** Toggle between 2, 4, 6, or 8 decimal places
@@ -43,24 +44,26 @@ python calc.py --test
   - Style 1: Mixed numbers (e.g., `1 1/2`)
   - Style 2: Improper fractions (e.g., `3/2`)
 
-### 5. **Parenthesis Support**
+### 4. **Parenthesis Support**
 - Press `(` button to toggle bracket mode
 - Brackets affect memory location where result is stored
 - Bracket status displayed in real-time
 > [!NOTE]
 > This calculator ignores operator precedence
-> (e.g., `1``+``2``*``3``=` → `9.0000`)
+> (e.g., `1` `+` `2` `*` `3` `=` → `9.0000`)
 
-### 6. **Exponentiation Operator**
-- **Traditional:** Not typically included
-- **This Calculator:** Power operation (`^`)
-  - `2 × ×` = `2^2` (press multiplication twice)
-  - Supports fractional exponents
+### 5. **Supported Operations**
+  - `+` Addition
+  - `−` Subtractions, also works as a unary minus
+  - `×` Multiplication, doublepress creates:
+    - `^` Exponentiation
+  - `÷` Division, when by 0:
+    - `sign` return sign of a number (-1, 0 or 1)
 
-### 8. **Error Indication**
+### 6. **Error Indication**
 - Question mark (`?`) appears when an invalid operation is attempted
-- Prevents entry of:
-  - Division by zero (returns sign of numerator)
+- Prevents:
+  - Invalid button presses
   - Invalid fraction syntax
   - Memory access out of range
   - Multiple decimal points
@@ -85,9 +88,9 @@ python calc.py --test
 
 ## Features Summary
 
-✅ Fraction arithmetic with automatic approximation
-✅ Mixed number display
-✅ Three independent memory slots
-✅ Adjustable decimal precision
-✅ Parenthesis support
-✅ Comprehensive test suite included
+✅ Fraction arithmetic with automatic approximation  
+✅ Mixed number display  
+✅ Three independent memory slots  
+✅ Adjustable decimal precision  
+✅ Parenthesis support  
+✅ Comprehensive test suite included  
