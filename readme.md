@@ -1,5 +1,4 @@
-# Red Calc - Advanced Calculator
-<!-- Make this less like a sales pitch -->
+# Red Calculator
 A standalone version of my [Factorio](https://factorio.com/) mod `red calculator`, implemented in Python using Tkinter.
 
 ## How to Run
