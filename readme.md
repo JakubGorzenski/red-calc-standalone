@@ -47,9 +47,9 @@ python calc.py --test
   - Pressing `(` can be used to toggle a bracket
   - After that `=` button will work as a close bracket
 > [!NOTE]
-> This calculator ignores operator precedence
-> (e.g., `1` `+` `2` `*` `3` `=` → `9.0000`
-> `1` `+` `(` `2` `*` `3` `=` `=` → `7.0000`)
+> This calculator ignores operator precedence  
+> (e.g., `1` `+` `2` `*` `3` `=` → `9.0000`  
+> `1` `+` `(` `2` `*` `3` `=` `=` → `7.0000`)  
 
 ### 5. **Supported Operations**
   - `+` Addition
@@ -90,7 +90,7 @@ python calc.py --test
 
 ✅ Fraction arithmetic with automatic approximation  
 ✅ Mixed number display  
-✅ Three independent memory slots  
+✅ Three automatic memory arrays  
 ✅ Adjustable decimal precision  
 ✅ Parenthesis support  
 ✅ Comprehensive test suite included  
