@@ -38,18 +38,18 @@ python calc.py --test
     - Manual:    `3.1415` `/` `123` → `387/123`
 
 ### 3. **Adjustable Precision & Fraction Display**
-- **Precision Slider:** Toggle between 2, 4, 6, or 8 decimal places
-- **Fraction Style Toggle:**
-  - Mixed numbers (e.g., `1 1/2`)
-  - Improper fractions (e.g., `3/2`)
-
+  - **Precision Slider:** Toggle between 2, 4, 6, or 8 decimal places
+  - **Fraction Style Toggle:**
+    - Mixed numbers (e.g., `1 1/2`)
+    - Improper fractions (e.g., `3/2`)
+<!-- re-word this -->
 ### 4. **Parenthesis Support**
-- Press `(` button to toggle bracket mode
-- Brackets affect memory location where result is stored
-- Bracket status displayed in real-time
+  - Pressing `(` can be used to toggle a bracket
+  - After that `=` button will work as a close bracket
 > [!NOTE]
 > This calculator ignores operator precedence
-> (e.g., `1` `+` `2` `*` `3` `=` → `9.0000`)
+> (e.g., `1` `+` `2` `*` `3` `=` → `9.0000`
+> `1` `+` `(` `2` `*` `3` `=` `=` → `7.0000`)
 
 ### 5. **Supported Operations**
   - `+` Addition
@@ -60,12 +60,12 @@ python calc.py --test
     - `sign` return sign of a number (-1, 0 or 1)
 
 ### 6. **Error Indication**
-- Question mark (`?`) appears when an invalid operation is attempted
-- Prevents:
-  - Invalid button presses
-  - Invalid fraction syntax
-  - Memory access out of range
-  - Multiple decimal points
+  - Question mark (`?`) appears when an invalid operation is attempted
+  - Prevents:
+    - Invalid button presses
+    - Invalid fraction syntax
+    - Memory access out of range
+    - Multiple decimal points
 
 ---
 

@@ -364,7 +364,7 @@ def main(run_tests=False):
             curr.rq_op = op
         elif curr.rq_op == "×" and op == "×":
             curr.rq_op = "^"
-        elif op == "-":
+        elif op == "−":
             handle_number_button(C, "-")
         else:
             C.question_mark = "?"
@@ -443,8 +443,8 @@ def main(run_tests=False):
                         switch_precision(TC, " !@#$".index(key))
                     elif key in "%^":
                         switch_fraction(TC, " %^".index(key))
-                    elif key in "Sdc*:A":
-                        key = {"S":"Sel", "d":"DEL", "c":"CLR", "*":"×", ":":"÷", "A":"Ans"}[key]
+                    elif key in "Sdc-*:A":
+                        key = {"S":"Sel", "d":"DEL", "c":"CLR", "-":"−", "*":"×", ":":"÷", "A":"Ans"}[key]
                         handle_button_press(TC, key)
                     else:
                         handle_button_press(TC, key)
@@ -472,6 +472,7 @@ def main(run_tests=False):
 #   [A] [/] [0] [.] [(] [=]
 
         test("",                "                                   \n                                   ")
+        test("1+23dddd",        "                                   \n                                   ")
         test("$/6=",            "                                   \n   0.16666666                      ")
         test("$/6=/",           "                                   \n   1/6                             ")
         test("$1:6=/",          "                                   \n   1/6                             ")
@@ -498,6 +499,7 @@ def main(run_tests=False):
         test("^1.2/3",          "                                   \n   4/3                             ")
         test("//2",             "                                   \n   1 1/2                           ")
         test("///",             "                                 ? \n   1 1/                            ")
+        test("1+2-3",           "   3.00                            \n−  3                               ")
 
         print(test_result + "]")
 
@@ -531,7 +533,7 @@ def main(run_tests=False):
     # Button layout: 4 rows of 6 buttons
     buttons = [
         ["Sel", "7" , "8" , "9" ,"DEL","CLR"],
-        [ "C" , "4" , "5" , "6" , "-" , "×" ],
+        [ "C" , "4" , "5" , "6" , "−" , "×" ],
         [ "B" , "1" , "2" , "3" , "+" , "÷" ],
         ["Ans", "/" , "0" , "." , "(" , "=" ]
     ]
